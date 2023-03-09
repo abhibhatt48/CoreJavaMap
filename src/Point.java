@@ -35,7 +35,7 @@ public class Point {
      * @param to -- the target destination point to which we want to know the distance
      * @return -- the distance
      */
-    private Double distanceTo( Point to ) {
+    Double distanceTo( Point to ) {
         Double distance = Math.sqrt( (to.x - this.x)*(to.x - this.x) + (to.y - this.y)*(to.y - this.y));
         return distance;
     }
