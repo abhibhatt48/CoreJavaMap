@@ -1,10 +1,9 @@
 /**
  * Identify a location on a map by the street name a side of the street
  */
-public class Location {
+public class Location{
     private String streetId;
     private StreetSide streetSide;
-
     /**
      * Create a location on the map
      * @param street -- the id of the street where we are.
@@ -30,4 +29,9 @@ public class Location {
     public StreetSide getStreetSide() {
         return streetSide;
     }
+
+	public Point getPoint() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
