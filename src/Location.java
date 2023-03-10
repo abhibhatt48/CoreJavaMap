@@ -13,7 +13,7 @@ public class Location{
         streetId = street;
         streetSide = whichSide;
     }
-
+    
     /**
      * Return the street id represented by this location
      * @return -- the street of this location
@@ -29,9 +29,4 @@ public class Location{
     public StreetSide getStreetSide() {
         return streetSide;
     }
-
-	public Point getPoint() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
