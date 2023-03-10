@@ -39,7 +39,6 @@ public class Point {
         Double distance = Math.sqrt( (to.x - this.x)*(to.x - this.x) + (to.y - this.y)*(to.y - this.y));
         return distance;
     }
-
     /**
      * If leaving the current point, going to turnAt and then turning to turnTo, determine whether
      * that is a right turn, a left turn, a straight through, or a U-turn.  Straight is defined as being a

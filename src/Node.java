@@ -1,8 +1,8 @@
 import java.util.ArrayList;
 import java.util.List;
 
-class Node {
-        Point position;
+public class Node {
+		Point position;
         String label;
         private List<StreetEntry> connectedStreets = new ArrayList<>();
 
@@ -14,7 +14,6 @@ class Node {
             this.position = new Point(0, 0);
             this.label = x + "_" + y;
         }
-
         public boolean addStreet(String streetId, Point from, Point to) {
             try {
                 connectedStreets.add(new StreetEntry(streetId, this.position, to));

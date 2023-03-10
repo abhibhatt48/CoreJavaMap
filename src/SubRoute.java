@@ -33,7 +33,6 @@ public class SubRoute {
     public int subrouteEnd() {
         return endLeg;
     }
-
     /**
      * Convert this subroute into a pure route of its own.
      * @return -- the Route that represents the subroute all on its own.
