@@ -1,11 +1,18 @@
+import java.util.ArrayList;
 import java.util.List;
-
 /**
  * Define a route to travel in the map.  It's a sequence of turns and streets in the city map.
  *
  * The first leg of a route is leg 1.
  */
 public class Route {
+	private List<Point> points;
+    private List<Location> locations;
+
+    public Route() {
+        this.points = new ArrayList<>();
+        this.locations = new ArrayList<>();
+    }
 
     /**
      * Grow a Route by adding one step (called a "leg") of the route at a time.  This method adds one more
@@ -15,7 +22,14 @@ public class Route {
      * @return -- true if the leg was added to the route.
      */
     public Boolean appendTurn( TurnDirection turn, String streetTurnedOnto ) {
-        return true;
+    	if (locations.isEmpty()) {
+            locations.add(new Location(streetTurnedOnto, StreetSide.Right));
+        } else {
+            StreetSide lastSide = locations.get(locations.size() - 1).getStreetSide();
+            StreetSide newSide = (lastSide == StreetSide.Left) ? StreetSide.Right : StreetSide.Left;
+            locations.add(new Location(streetTurnedOnto, newSide));
+        }
+        return points.add(new Point(0, 0));  // just adding a dummy point for now
     }
 
     /**
@@ -26,7 +40,10 @@ public class Route {
      * @return -- the street id of the next leg, or null if there is an error.
      */
     public String turnOnto( int legNumber ) {
-        return null;
+    	if (legNumber < 1 || legNumber > this.locations.size()) {
+            return null;
+        }
+        return this.locations.get(legNumber - 1).getStreetId();
     }
 
     /**
@@ -37,7 +54,22 @@ public class Route {
      * @return -- the turn direction for the leg, or null if there is an error.
      */
     public TurnDirection turnDirection( int legNumber ) {
-        return TurnDirection.Straight;
+    	if (legNumber <= 0 || legNumber > locations.size()) {
+            return null;
+        }
+        if (legNumber == 1) {
+            return TurnDirection.Straight;
+        }
+        Location prevLocation = locations.get(legNumber - 2);
+        Location curLocation = locations.get(legNumber - 1);
+        if (prevLocation.getStreetId().equals(curLocation.getStreetId())) {
+            return TurnDirection.Straight;
+        }
+        if (prevLocation.getStreetSide() == StreetSide.Left) {
+            return (curLocation.getStreetSide() == StreetSide.Right) ? TurnDirection.Left : TurnDirection.Right;
+        } else {
+            return (curLocation.getStreetSide() == StreetSide.Left) ? TurnDirection.Right : TurnDirection.Left;
+        }
     }
 
     /**
@@ -45,7 +77,7 @@ public class Route {
      * @return -- the number of legs in this route.
      */
     public int legs() {
-        return 0;
+    	return this.locations.size();
     }
 
     /**
@@ -56,7 +88,13 @@ public class Route {
      * @return -- the length of the current route.
      */
     public Double length() {
-        return 0.0;
+    	double length = 0;
+        for (int i = 1; i < points.size(); i++) {
+            Point prevPoint = points.get(i - 1);
+            Point curPoint = points.get(i);
+            length += prevPoint.distanceTo(curPoint);
+        }
+        return length / 2;  // assuming first and last legs only contribute half to length
     }
 
     /**
@@ -73,7 +111,24 @@ public class Route {
      * share a common interesection.
      */
     public List<SubRoute> loops() {
-        return null;
+    	List<SubRoute> loops = new ArrayList<>();
+        List<Integer> loopEnds = new ArrayList<>();
+        for (int i = 1; i <= locations.size(); i++) {
+            for (int j = i + 1; j <= locations.size(); j++) {
+                if (locations.get(i - 1).getStreetId().equals(locations.get(j - 1).getStreetId())) {
+                    List<Location> subLocations = locations.subList(i - 1, j);
+                    if (subLocations.size() > 1 && subLocations.get(0).getStreetSide() == subLocations.get(subLocations.size() - 1).getStreetSide()) {
+                        loopEnds.add(j);
+                    }
+                }
+            }
+        }
+        int prevEnd = 0;
+        for (int end : loopEnds) {
+            loops.add(new SubRoute(this, prevEnd + 1, end));
+            prevEnd = end;
+        }
+        return loops;
     }
 
     /**
@@ -83,6 +138,25 @@ public class Route {
      * @return -- the simplified route.
      */
     public Route simplify() {
-        return null;
+    	List<Location> simplifiedLocations = new ArrayList<>();
+        simplifiedLocations.add(locations.get(0));
+        for (int i = 1; i < locations.size() - 1; i++) {
+            if (!shouldSkip(locations.get(i - 1), locations.get(i), locations.get(i + 1))) {
+                simplifiedLocations.add(locations.get(i));
+            }
+        }
+        simplifiedLocations.add(locations.get(locations.size() - 1));
+
+        Route simplifiedRoute = new Route();
+        for (Location loc : simplifiedLocations) {
+            simplifiedRoute.appendTurn(TurnDirection.Straight, loc.getStreetId());
+        }
+        return simplifiedRoute;
+    }
+
+    private boolean shouldSkip(Location prevLoc, Location curLoc, Location nextLoc) {
+        return prevLoc.getStreetId().equals(curLoc.getStreetId()) ||
+               curLoc.getStreetId().equals(nextLoc.getStreetId()) ||
+               prevLoc.getStreetId().equals(nextLoc.getStreetId());
     }
 }
