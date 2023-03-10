@@ -1,4 +1,8 @@
 public class SubRoute {
+	
+	private final Route route;
+    private final int startLeg;
+    private final int endLeg;
     /**
      * Identify a sub-part of a route.  The sub-part of the route goes from the start of the startLeg
      * to the end of the endLeg.
@@ -9,6 +13,9 @@ public class SubRoute {
      * @param endLeg -- the ending leg of the subroute
      */
     public SubRoute( Route walk, int startLeg, int endLeg ) {
+    	this.route = walk;
+        this.startLeg = startLeg;
+        this.endLeg = endLeg;
     }
 
     /**
@@ -16,7 +23,7 @@ public class SubRoute {
      * @return -- the starting leg number
      */
     public int subrouteStart() {
-        return 0;
+        return startLeg;
     }
 
     /**
@@ -24,7 +31,7 @@ public class SubRoute {
      * @return - the leg number that ends the subroute
      */
     public int subrouteEnd() {
-        return 0;
+        return endLeg;
     }
 
     /**
@@ -32,6 +39,10 @@ public class SubRoute {
      * @return -- the Route that represents the subroute all on its own.
      */
     public Route extractRoute() {
-        return  null;
+    	Route extractedRoute = new Route();
+    	for (int i = startLeg; i <= endLeg; i++) {
+            extractedRoute.appendTurn(route.turnDirection(i), route.turnOnto(i));
+        }
+        return extractedRoute;
     }
 }
