@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 /**
  * Define a route to travel in the map.  It's a sequence of turns and streets in the city map.
@@ -8,12 +9,24 @@ import java.util.List;
 public class Route {
 	private List<Point> points;
     private List<Location> locations;
+    private final List<String> streets;
 
     public Route() {
         this.points = new ArrayList<>();
         this.locations = new ArrayList<>();
+        this.streets = new ArrayList<>();       
     }
 
+    public void addStreet(String streetId, String turnDirection) {
+        streets.add(streetId + " " + turnDirection);
+    }
+    public List<String> getStreets() {
+        return streets;
+    }
+
+    public void reverseStreets() {
+        Collections.reverse(streets);
+    }
     /**
      * Grow a Route by adding one step (called a "leg") of the route at a time.  This method adds one more
      * leg to an existing route
@@ -143,9 +156,9 @@ public class Route {
         for (int i = 1; i < locations.size() - 1; i++) {
             if (!shouldSkip(locations.get(i - 1), locations.get(i), locations.get(i + 1))) {
                 simplifiedLocations.add(locations.get(i));
-            }
-        }
-        simplifiedLocations.add(locations.get(locations.size() - 1));
+           }
+       }
+       simplifiedLocations.add(locations.get(locations.size() - 1));
 
         Route simplifiedRoute = new Route();
         for (Location loc : simplifiedLocations) {
