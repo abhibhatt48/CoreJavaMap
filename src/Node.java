@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class Node {
+class Node {
         Point position;
         String label;
         private List<StreetEntry> connectedStreets = new ArrayList<>();
