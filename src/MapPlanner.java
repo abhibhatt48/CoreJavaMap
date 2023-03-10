@@ -1,3 +1,4 @@
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,12 +11,14 @@ import java.util.Set;
 class StreetEntry {
     Node from;
     Node to;
-    String streetId;
+    private final String streetId;
     // key = coordinates separated with _ Value = Node
     private Map<String, Node> nodes = new HashMap<>();
+	public Double distance;
 
     public StreetEntry(String streetId, Point from, Point to) {
 
+    	
         Node fromNode = getNode(from);
 
         if (fromNode == null) {
@@ -29,6 +32,12 @@ class StreetEntry {
         this.from = fromNode;
         this.to = toNode;
         this.streetId = streetId;
+    }
+    public String getStreetId() {
+        return streetId;
+    }
+    public Node getTo() {
+        return to;
     }
 
 
@@ -45,8 +54,11 @@ public class MapPlanner {
     private Map<String, StreetEntry> streets = new HashMap<>();
     protected Location currentLocation;
     private Map<String, Node> nodes = new HashMap<>();
+	private Map<String, Node> graph;
     
-   
+    private StreetEntry getStreetByStreetId(String id) {
+        return this.streets.get(id);
+    }
 
     /**
      * Create the Map Planner object.  The degrees provided tell us how much deviation from straight-forward
@@ -56,6 +68,10 @@ public class MapPlanner {
     public MapPlanner( int degrees ) {
     	this.degrees = degrees;
     }
+    public MapPlanner(Map<String, Node> graph) {
+        this.graph = graph;
+    }
+
 
     /**
      * Identify the location of the depot.  That location is used as the starting point of any route request
@@ -177,15 +193,77 @@ public class MapPlanner {
      * Compute a route to the given destination from the depot, given the current map and not allowing
      * the route to make any left turns at intersections.
      * @param destination -- the destination for the route
+     * 
      * @return -- the route to the destination, or null if no route exists.
      */
-    public Route routeNoLeftTurn( Location destination ) {
-        return null;
-    }
-    
-    // method used to get street by StreetId
-    private StreetEntry getStreetByStreetId(String id) {
-        return this.streets.get(id);
+        public Route routeNoLeftTurn(Location destination) {
+            // initialize data structures for Dijkstra's algorithm
+            Map<Node, Double> distance = new HashMap<>();
+            Map<Node, Node> previous = new HashMap<>();
+            PriorityQueue<NodeEntry> queue = new PriorityQueue<>(Comparator.comparingInt(ne -> ne.priority));
+            Set<Node> visited = new HashSet<>();
+            final Node startNode = graph.get("depot");
+            distance.put(startNode, 0.0);
+            queue.offer(new NodeEntry(startNode, 0));
+
+            // run Dijkstra's algorithm
+            while (!queue.isEmpty()) {
+                NodeEntry currentEntry = queue.poll();
+                Node currentNode = currentEntry.node;
+                if (visited.contains(currentNode)) {
+                    continue;
+                }
+                visited.add(currentNode);
+                if (currentNode.label.equals(destination.getStreetId())) {
+                    break;  // found shortest path to destination
+                }
+                for (StreetEntry street : currentNode.getStreets()) {
+                    Node neighborNode = graph.get(street.to.label);
+                    if (neighborNode == null) {
+                        continue;
+                    }
+                    Double neighborDistance = distance.getOrDefault(neighborNode, Double.POSITIVE_INFINITY);
+                    Double newDistance = distance.get(currentNode) + street.distance;
+                    if (newDistance < neighborDistance) {
+                          // check if left turn is allowed
+                            distance.put(neighborNode, newDistance);
+                            previous.put(neighborNode, currentNode);
+                            queue.offer(new NodeEntry(neighborNode, newDistance.intValue()));
+                    }
+                }
+            }
+            // build the route
+            Route route = new Route();
+            Node currentNode = graph.get(destination.getStreetId());
+            Node loopNode = currentNode;
+            while (loopNode != null && !loopNode.label.equals("depot")) {
+                Node prevNode = previous.get(loopNode);
+                StreetEntry street = prevNode.getStreets().stream()
+                        .filter(s -> s.to.label.equals(currentNode.label))
+                        .findFirst().orElse(null);
+                if (street != null) {
+                    route.appendTurn(getTurnDirection(street, prevNode, loopNode), street.streetId);
+                }
+                loopNode = prevNode;
+            }
+            route.appendTurn(TurnDirection.Left, startNode.getStreets().get(0).streetId);  // add first leg
+            Collections.reverse(route.loops());
+            Collections.reverse(route.getStreets());
+            return route;
+        }
+        private TurnDirection getTurnDirection(StreetEntry street, Node prevNode, Node currentNode) {
+            Point prevPoint = prevNode.position;
+            Point curPoint = currentNode.position;
+            Point nextPoint = street.to.position;
+            TurnDirection turnDirection = prevPoint.turnType(curPoint, nextPoint, 20);
+            if (turnDirection == TurnDirection.Slight_Left || turnDirection == TurnDirection.Sharp_Left) {
+                return TurnDirection.Left;
+            } else if (turnDirection == TurnDirection.Slight_Right || turnDirection == TurnDirection.Sharp_Right) {
+                return TurnDirection.Right;
+            } else {
+                return TurnDirection.Straight;
+            }
+        }
     }
 }
-}
+
