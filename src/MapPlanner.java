@@ -9,45 +9,63 @@ import java.util.Set;
 
 
 class StreetEntry {
-    Node from;
-    Node to;
+    private Node from;
+    private Node to;
     private final String streetId;
     // key = coordinates separated with _ Value = Node
     private Map<String, Node> nodes = new HashMap<>();
-	public Double distance;
+    private Double distance;
 
     public StreetEntry(String streetId, Point from, Point to) {
 
-    	
+        // Get the node corresponding to the "from" point
         Node fromNode = getNode(from);
 
+        // Throw an exception if the node does not exist
         if (fromNode == null) {
             throw new IllegalArgumentException();
         }
+
+        // Get the node corresponding to the "to" point
         Node toNode = getNode(to);
+
+        // Throw an exception if the node does not exist
         if (toNode == null) {
             throw new IllegalArgumentException();
         }
 
+        // Set the instance variables of the class
         this.from = fromNode;
         this.to = toNode;
         this.streetId = streetId;
     }
+    // Get the ID of the street
     public String getStreetId() {
         return streetId;
     }
+
+    // Get the node corresponding to the "to" point
     public Node getTo() {
         return to;
     }
+ // Get the node corresponding to the given position
+    public Node getNode(Point position) {
+        // Create a key for the position by concatenating the X and Y coordinates
+        String key = position.getX() + "_" + position.getY();
 
+        // Get the node corresponding to the key from the map
+        Node node = nodes.get(key);
 
-public Node getNode(Point position) {
-	Node node = nodes.get(position.getX() + "_" + position.getY());
-    if (node == null) {
-        throw new IllegalArgumentException();
+        // Throw an exception if the node does not exist
+        if (node == null) {
+            throw new IllegalArgumentException();
+        }
+
+        // Return the node
+        return node;
     }
-    return node;
-}
+
+
 public class MapPlanner {
 	
 	private int degrees;
@@ -71,7 +89,6 @@ public class MapPlanner {
     public MapPlanner(Map<String, Node> graph) {
         this.graph = graph;
     }
-
 
     /**
      * Identify the location of the depot.  That location is used as the starting point of any route request
@@ -137,7 +154,7 @@ public class MapPlanner {
         Double maxDistance = Double.NEGATIVE_INFINITY;
         for (var se : streets) {
             if (current.position.distanceTo(se.to.position) > maxDistance) {
-                streetId = se.streetId;
+                streetId = se.getStreetId();
             }
         }
         return streetId;
@@ -242,11 +259,11 @@ public class MapPlanner {
                         .filter(s -> s.to.label.equals(currentNode.label))
                         .findFirst().orElse(null);
                 if (street != null) {
-                    route.appendTurn(getTurnDirection(street, prevNode, loopNode), street.streetId);
+                    route.appendTurn(getTurnDirection(street, prevNode, loopNode), street.getStreetId());
                 }
                 loopNode = prevNode;
             }
-            route.appendTurn(TurnDirection.Left, startNode.getStreets().get(0).streetId);  // add first leg
+            route.appendTurn(TurnDirection.Left, startNode.getStreets().get(0).getStreetId());  // add first leg
             Collections.reverse(route.loops());
             Collections.reverse(route.getStreets());
             return route;
